@@ -43,17 +43,17 @@ php artisan migrate
 php artisan serve
 ```
 
-La API ahora estará disponible en `http://localhost:8000`.
+La API ahora estará disponible en `https://managementinventory-production.up.railway.app`.
 
 ## 2. Colección Postman / Swagger
 
-- **Postman**: [Descargar colección Postman](http://enlace-a-tu-coleccion-postman.com)
+- **Postman**: [Descargar colección Postman](https://drive.google.com/file/d/1cLbrWnG2QzpKyC3WpyBkqy1PrJI4lPL0/view?usp=sharing)
 
 ## 3. URL pública de despliegue
 
 Puedes acceder a la API desplegada en el siguiente enlace:
 
-[URL pública](http://url-publica-de-tu-api.com)
+[URL pública](https://github.com/jeissonmoscoso1327/management_inventory)
 
 ## 4. Decisiones de diseño
 
