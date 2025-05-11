@@ -2,8 +2,8 @@
 
 namespace App\Interfaces;
 
-use Illuminate\Database\Eloquent\Collection;
 use App\Models\Product;
+use Illuminate\Database\Eloquent\Collection;
 
 interface ProductsRepositoryInterface
 {
@@ -43,7 +43,7 @@ interface ProductsRepositoryInterface
     public function update(int $id, array $data): ?Product;
 
     /**
-     * Method to update products
+     * Method to delete products
      * 
      * @param int $id
      * 

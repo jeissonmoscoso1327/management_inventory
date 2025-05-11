@@ -3,88 +3,136 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Models\Category;
+use App\Interfaces\CategoriesRepositoryInterface;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
+use Throwable;
 
 class CategoryController extends Controller
 {
-    public function __construct()
-    {
+    public function __construct(
+        protected CategoriesRepositoryInterface $categoriesRepositoryInterface
+    ) {
         $this->middleware('auth:sanctum');
     }
 
     public function index()
     {
-        return Category::all();
+        try {
+            return $this->categoriesRepositoryInterface->getAll();
+        } catch (Throwable $e) {
+            Log::error(
+                'CategoryController::store()',
+                [
+                    'exception' => $e,
+                ]
+            );
+        }
     }
 
     public function store(Request $request)
     {
-        if (Auth::user()->role !== 'admin') {
-            return response()->json(['message' => 'Unauthorized'], JsonResponse::HTTP_FORBIDDEN);
+        try {
+            if (Auth::user()->role !== 'admin') {
+                return response()->json(['message' => 'Unauthorized'], JsonResponse::HTTP_FORBIDDEN);
+            }
+
+            $validated = $request->validate([
+                'name' => 'required|string|max:255',
+                'description' => 'nullable|string',
+            ]);
+
+            $category = $this->categoriesRepositoryInterface->create($validated);
+
+            return response()->json([
+                'message' => 'Successfully created category',
+                'category' => $category,
+            ], JsonResponse::HTTP_CREATED);
+        } catch (Throwable $e) {
+            Log::error(
+                'CategoryController::store()',
+                [
+                    'exception' => $e,
+                ]
+            );
         }
-
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'description' => 'nullable|string',
-        ]);
-
-        $category = Category::create($validated);
-
-        return response()->json($category, JsonResponse::HTTP_CREATED);
     }
 
-    public function show($id)
+    public function show(int $id)
     {
-        $category = Category::find($id);
+        try {
+            $category = $this->categoriesRepositoryInterface->getById($id);
 
-        if (! $category) {
-            return response()->json(['message' => 'Category not found'], JsonResponse::HTTP_NOT_FOUND);
+            if (! $category) {
+                return response()->json(['message' => 'Category not found'], JsonResponse::HTTP_NOT_FOUND);
+            }
+
+            return $category;
+        } catch (Throwable $e) {
+            Log::error(
+                'CategoryController::show()',
+                [
+                    'exception' => $e,
+                ]
+            );
         }
-
-        return response()->json($category);
     }
 
-    public function update(Request $request, $id)
+    public function update(Request $request, int $id)
     {
-        if (Auth::user()->role !== 'admin') {
-            return response()->json(['message' => 'Unauthorized'], JsonResponse::HTTP_FORBIDDEN);
+        try {
+            if (Auth::user()->role !== 'admin') {
+                return response()->json(['message' => 'Unauthorized'], JsonResponse::HTTP_FORBIDDEN);
+            }
+
+            $validated = $request->validate([
+                'name' => 'required|string|max:255',
+                'description' => 'nullable|string',
+            ]);
+
+            $category = $this->categoriesRepositoryInterface->update($id, $validated);
+
+            if (! $category) {
+                return response()->json(['message' => 'Category not found'], JsonResponse::HTTP_NOT_FOUND);
+            }
+
+            return response()->json([
+                'message' => 'Category updated successfully',
+                'category' => $category,
+            ], JsonResponse::HTTP_OK);
+        } catch (Throwable $e) {
+            Log::error(
+                'CategoryController::update()',
+                [
+                    'exception' => $e,
+                ]
+            );
         }
-
-        $category = Category::find($id);
-
-        if (! $category) {
-            return response()->json(['message' => 'Category not found'], JsonResponse::HTTP_NOT_FOUND);
-        }
-
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'description' => 'nullable|string',
-        ]);
-
-        $category->update($validated);
-
-        return response()->json([
-            'message' => 'Category updated successfully',
-            'Category' => $category,
-        ], JsonResponse::HTTP_CREATED);
     }
 
-    public function destroy($id)
+    public function destroy(int $id)
     {
-        if (Auth::user()->role !== 'admin') {
-            return response()->json(['message' => 'Unauthorized'], JsonResponse::HTTP_FORBIDDEN);
+        try {
+            if (Auth::user()->role !== 'admin') {
+                return response()->json(['message' => 'Unauthorized'], JsonResponse::HTTP_FORBIDDEN);
+            }
+
+            $deleted = $this->categoriesRepositoryInterface->delete($id);
+
+            if (! $category) {
+                return response()->json(['message' => 'Category not found'], JsonResponse::HTTP_NOT_FOUND);
+            }
+
+            return response()->json(['message' => 'Category deleted successfully'], JsonResponse::HTTP_OK);
+        } catch (Throwable $e) {
+            Log::error(
+                'CategoryController::destroy()',
+                [
+                    'exception' => $e,
+                ]
+            );
         }
-
-        $category = Category::find($id);
-        if (! $category) {
-            return response()->json(['message' => 'Category not found'], JsonResponse::HTTP_NOT_FOUND);
-        }
-
-        $category->delete();
-
-        return response()->json(['message' => 'Category deleted successfully']);
     }
 }
