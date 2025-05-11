@@ -3,26 +3,27 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Models\Product;
+use App\Interfaces\ProductsRepositoryInterface;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
 class ProductController extends Controller
 {
-    public function __construct()
-    {
+    public function __construct(
+        protected ProductsRepositoryInterface $productsRepositoryInterface
+    ) {
         $this->middleware('auth:sanctum');
     }
 
     public function index()
     {
-        return Product::all();
+        return $this->productsRepositoryInterface->getAll();
     }
 
     public function show($id)
     {
-        $product = Product::find($id);
+        $product = $this->productsRepositoryInterface->getById($id);
         if (! $product) {
             return response()->json(['message' => 'Product not found'], JsonResponse::HTTP_NOT_FOUND);
         }
@@ -44,7 +45,7 @@ class ProductController extends Controller
             'stock' => 'required|integer',
         ]);
 
-        $product = Product::create($validated);
+        $product = $this->productsRepositoryInterface->create($validated);
 
         return response()->json([
             'message' => 'Successfully created product',
@@ -58,11 +59,6 @@ class ProductController extends Controller
             return response()->json(['message' => 'Unauthorized'], JsonResponse::HTTP_FORBIDDEN);
         }
 
-        $product = Product::find($id);
-        if (! $product) {
-            return response()->json(['message' => 'Product not found'], JsonResponse::HTTP_NOT_FOUND);
-        }
-
         $validated = $request->validate([
             'category_id' => 'sometimes|required|integer',
             'name' => 'sometimes|required|string|max:255',
@@ -71,7 +67,11 @@ class ProductController extends Controller
             'stock' => 'sometimes|required|integer',
         ]);
 
-        $product->update($validated);
+        $product = $this->productsRepositoryInterface->update($id, $validated);
+
+        if (! $product) {
+            return response()->json(['message' => 'Product not found'], JsonResponse::HTTP_NOT_FOUND);
+        }
 
         return response()->json([
             'message' => 'Product updated successfully',
@@ -85,12 +85,10 @@ class ProductController extends Controller
             return response()->json(['message' => 'Unauthorized'], JsonResponse::HTTP_FORBIDDEN);
         }
 
-        $product = Product::find($id);
-        if (! $product) {
+        $deleted = $this->productsRepositoryInterface->delete($id);
+        if (! $deleted) {
             return response()->json(['message' => 'Product not found'], JsonResponse::HTTP_NOT_FOUND);
         }
-
-        $product->delete();
 
         return response()->json(['message' => 'Product deleted']);
     }
